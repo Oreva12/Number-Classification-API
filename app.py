@@ -25,7 +25,7 @@ def is_armstrong(n):
 def digit_sum(n):
     return sum(int(digit) for digit in str(n))
 
-@app.route('/api/classify-number', methods=['GET'])
+@app.route('/classify-number', methods=['GET'])
 def classify_number():
     try:
         # Get the number from the query string
