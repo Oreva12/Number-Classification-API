@@ -1,11 +1,9 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import requests
-from concurrent.futures import ThreadPoolExecutor
 
 app = Flask(__name__)
 CORS(app)
-executor = ThreadPoolExecutor(2)
+
 
 def is_prime(n):
     if n <= 1:
@@ -20,19 +18,23 @@ def is_perfect(n):
     return sum(divisors) == n
 
 def is_armstrong(n):
-    digits = [int(digit) for digit in str(abs(n))]  # Consider absolute value for armstrong check
+    digits = [int(digit) for digit in str(abs(n))]
     power = len(digits)
     return abs(n) == sum(digit**power for digit in digits)
 
 def digit_sum(n):
-    return sum(int(digit) for digit in str(abs(n)))  # Ensure absolute value is used
+    return sum(int(digit) for digit in str(abs(n)))
 
-def get_fun_fact(number):
-    response = requests.get(f"http://numbersapi.com/{number}?json")
-    return response.json().get('text', 'No fun fact available.')
+async def get_fun_fact(number):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(f"http://numbersapi.com/{number}?json") as response:
+            if response.status == 200:
+                data = await response.json()
+                return data.get('text', 'No fun fact available.')
+            return 'No fun fact available.'
 
 @app.route('/classify-number', methods=['GET'])
-def classify_number():
+async def classify_number():
     try:
         number = request.args.get('number')
 
@@ -44,7 +46,7 @@ def classify_number():
         
         number = int(number)
 
-        fun_fact = executor.submit(get_fun_fact, number).result()
+        fun_fact = await get_fun_fact(number)
 
         result = {
             "number": number,
@@ -57,13 +59,13 @@ def classify_number():
 
         if is_armstrong(number):
             result["properties"].append("armstrong")
-        if abs(number) % 2 == 1:  
+        if abs(number) % 2 == 1:
             result["properties"].append("odd")
         else:
             result["properties"].append("even")
 
         if number < 0:
-            result["properties"].append("negative")  
+            result["properties"].append("negative")
 
         return jsonify(result), 200
 
