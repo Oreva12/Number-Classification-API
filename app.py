@@ -31,7 +31,7 @@ def classify_number():
         number = request.args.get('number')
         
         if not number.isdigit():
-            return jsonify({"error": True, "message": "Invalid number format"}), 400
+            return jsonify({"error": True, "message": "'NoneType'object has no attribute 'isdigit'"}), 400
         
         number = int(number)
         
