@@ -20,12 +20,12 @@ def is_perfect(n):
     return sum(divisors) == n
 
 def is_armstrong(n):
-    digits = [int(digit) for digit in str(n)]
+    digits = [int(digit) for digit in str(abs(n))]  # Consider absolute value for armstrong check
     power = len(digits)
-    return n == sum(digit**power for digit in digits)
+    return abs(n) == sum(digit**power for digit in digits)
 
 def digit_sum(n):
-    return sum(int(digit) for digit in str(n))
+    return sum(int(digit) for digit in str(abs(n)))  # Ensure absolute value is used
 
 def get_fun_fact(number):
     response = requests.get(f"http://numbersapi.com/{number}?json")
@@ -34,36 +34,18 @@ def get_fun_fact(number):
 @app.route('/classify-number', methods=['GET'])
 def classify_number():
     try:
-        # Get the number from the query string
         number = request.args.get('number')
 
-        # Handle case where number is missing or empty
         if not number:
             return jsonify({"error": True, "number": "", "message": "Number parameter is missing."}), 400
 
-        # Handle case where number is not a valid integer
         if not number.lstrip('-').isdigit():
             return jsonify({"error": True, "number": number}), 400
         
-        # Convert the number to an integer
         number = int(number)
 
-        # Handle cases for negative numbers (optional based on your API logic)
-        if number < 0:
-            return jsonify({
-                "error": True,
-                "number": number,
-                "message": "Negative numbers are not supported.",
-                "is_prime": False,
-                "is_perfect": False,
-                "properties": [],
-                "digit_sum": abs(number)
-            }), 400
-
-        # Fetch fun fact using asynchronous call
         fun_fact = executor.submit(get_fun_fact, number).result()
 
-        # Prepare the result
         result = {
             "number": number,
             "is_prime": is_prime(number),
@@ -73,14 +55,16 @@ def classify_number():
             "fun_fact": fun_fact
         }
 
-        # Additional number properties
         if is_armstrong(number):
             result["properties"].append("armstrong")
-        if number % 2 == 1:
+        if abs(number) % 2 == 1:  
             result["properties"].append("odd")
         else:
             result["properties"].append("even")
-        
+
+        if number < 0:
+            result["properties"].append("negative")  
+
         return jsonify(result), 200
 
     except Exception as e:
