@@ -33,18 +33,18 @@ def classify_number():
 
         # Handle case where number is missing or empty
         if not number:
-            return jsonify({"error": True, "message": "Number parameter is missing."}), 400
+            return jsonify({"error": True, "number": "", "message": "Number parameter is missing."}), 400
 
         # Handle case where number is not a valid integer
-        if not number.isdigit() and (not number.startswith('-') or not number[1:].isdigit()):
-            return jsonify({"error": True, "message": "Invalid number format. Please provide a valid number."}), 400
+        if not number.lstrip('-').isdigit():
+            return jsonify({"error": True, "number": number, "message": "Invalid number format. Please provide a valid number."}), 400
         
         # Convert the number to an integer
         number = int(number)
 
         # Handle cases for negative numbers (optional based on your API logic)
         if number < 0:
-            return jsonify({"error": True, "message": "Negative numbers are not supported."}), 400
+            return jsonify({"error": True, "number": number, "message": "Negative numbers are not supported."}), 400
 
         # Fetch fun fact from numbersapi
         response = requests.get(f"http://numbersapi.com/{number}?json")
