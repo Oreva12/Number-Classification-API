@@ -28,19 +28,32 @@ def digit_sum(n):
 @app.route('/api/classify-number', methods=['GET'])
 def classify_number():
     try:
+        # Get the number from the query string
         number = request.args.get('number')
+
+        # Handle case where number is missing or empty
+        if not number:
+            return jsonify({"error": True, "message": "Number parameter is missing."}), 400
+
+        # Handle case where number is not a valid integer
+        if not number.isdigit() and (not number.startswith('-') or not number[1:].isdigit()):
+            return jsonify({"error": True, "message": "Invalid number format. Please provide a valid number."}), 400
         
-        if not number.isdigit():
-            return jsonify({"error": True, "message": "'NoneType'object has no attribute 'isdigit'"}), 400
-        
+        # Convert the number to an integer
         number = int(number)
-        
+
+        # Handle cases for negative numbers (optional based on your API logic)
+        if number < 0:
+            return jsonify({"error": True, "message": "Negative numbers are not supported."}), 400
+
+        # Fetch fun fact from numbersapi
         response = requests.get(f"http://numbersapi.com/{number}?json")
         if response.status_code != 200:
             return jsonify({"error": True, "message": "Error fetching fun fact"}), 500
         
         fun_fact = response.json().get('text', 'No fun fact available.')
-        
+
+        # Prepare the result
         result = {
             "number": number,
             "is_prime": is_prime(number),
@@ -49,7 +62,8 @@ def classify_number():
             "digit_sum": digit_sum(number),
             "fun_fact": fun_fact
         }
-        
+
+        # Additional number properties
         if is_armstrong(number):
             result["properties"].append("armstrong")
         if number % 2 == 1:
@@ -58,7 +72,7 @@ def classify_number():
             result["properties"].append("even")
         
         return jsonify(result), 200
-        
+
     except Exception as e:
         return jsonify({"error": True, "message": str(e)}), 500
 
