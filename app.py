@@ -1,9 +1,11 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import requests
+from concurrent.futures import ThreadPoolExecutor
 
 app = Flask(__name__)
 CORS(app)
+executor = ThreadPoolExecutor(2)
 
 def is_prime(n):
     if n <= 1:
@@ -25,6 +27,10 @@ def is_armstrong(n):
 def digit_sum(n):
     return sum(int(digit) for digit in str(n))
 
+def get_fun_fact(number):
+    response = requests.get(f"http://numbersapi.com/{number}?json")
+    return response.json().get('text', 'No fun fact available.')
+
 @app.route('/classify-number', methods=['GET'])
 def classify_number():
     try:
@@ -37,14 +43,13 @@ def classify_number():
 
         # Handle case where number is not a valid integer
         if not number.lstrip('-').isdigit():
-            return jsonify({"error": True, "number": number, "message": "Invalid number format. Please provide a valid number."}), 400
+            return jsonify({"error": True, "number": number}), 400
         
         # Convert the number to an integer
         number = int(number)
 
         # Handle cases for negative numbers (optional based on your API logic)
         if number < 0:
-            # Return default response for negative numbers
             return jsonify({
                 "error": True,
                 "number": number,
@@ -52,15 +57,11 @@ def classify_number():
                 "is_prime": False,
                 "is_perfect": False,
                 "properties": [],
-                "digit_sum": abs(number)  # Make digit sum positive
+                "digit_sum": abs(number)
             }), 400
 
-        # Fetch fun fact from numbersapi
-        response = requests.get(f"http://numbersapi.com/{number}?json")
-        if response.status_code != 200:
-            return jsonify({"error": True, "message": "Error fetching fun fact"}), 500
-        
-        fun_fact = response.json().get('text', 'No fun fact available.')
+        # Fetch fun fact using asynchronous call
+        fun_fact = executor.submit(get_fun_fact, number).result()
 
         # Prepare the result
         result = {
