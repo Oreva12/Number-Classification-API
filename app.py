@@ -44,7 +44,16 @@ def classify_number():
 
         # Handle cases for negative numbers (optional based on your API logic)
         if number < 0:
-            return jsonify({"error": True, "number": number, "message": "Negative numbers are not supported."}), 400
+            # Return default response for negative numbers
+            return jsonify({
+                "error": True,
+                "number": number,
+                "message": "Negative numbers are not supported.",
+                "is_prime": False,
+                "is_perfect": False,
+                "properties": [],
+                "digit_sum": abs(number)  # Make digit sum positive
+            }), 400
 
         # Fetch fun fact from numbersapi
         response = requests.get(f"http://numbersapi.com/{number}?json")
